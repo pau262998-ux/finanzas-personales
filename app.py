@@ -14,7 +14,6 @@ if archivo is not None:
   try: df=pd.read_csv(archivo,encoding="latin1",sep=",")
   except: archivo.seek(0)
  df=pd.read_csv(archivo,encoding="latin1",sep=";") else: df=pd.read_excel(archivo)
-
  if df.shape[1]==1:
   df=df[df.columns[0]].str.split(",",expand=True)
 
