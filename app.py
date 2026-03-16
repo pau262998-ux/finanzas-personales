@@ -11,7 +11,11 @@ archivo=st.file_uploader("Sube tu archivo de Budge (CSV o Excel)")
 if archivo is not None:
 
  if archivo.name.endswith(".csv"):
-  df=pd.read_csv(archivo,encoding="latin1",sep=",")
+  try:
+ df=pd.read_csv(archivo,encoding="latin1",sep=",")
+except:
+ df=pd.read_csv(archivo,encoding="latin1",sep=";")
+ 
  else:
   df=pd.read_excel(archivo)
 
