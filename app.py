@@ -13,7 +13,7 @@ if archivo is not None:
  if archivo.name.endswith(".csv"):
   try:
  df=pd.read_csv(archivo,encoding="latin1",sep=",")
-except:
+  except:
  df=pd.read_csv(archivo,encoding="latin1",sep=";")
  
  else:
