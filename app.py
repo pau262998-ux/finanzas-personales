@@ -6,93 +6,95 @@ st.set_page_config(layout="wide")
 
 st.title("Mi dashboard financiero")
 
-archivo=st.file_uploader("Sube tu archivo de Budge (CSV o Excel)")
+archivo = st.file_uploader("Sube tu archivo de Budge (CSV o Excel)")
 
 if archivo is not None:
 
- if archivo.name.endswith(".csv"):
-  try: df=pd.read_csv(archivo,encoding="latin1",sep=",")
-  except: archivo.seek(0) df=pd.read_csv(archivo,encoding="latin1",sep=";") else: df=pd.read_excel(archivo)
- if df.shape[1]==1:
-  df=df[df.columns[0]].str.split(",",expand=True)
+    if archivo.name.endswith(".csv"):
+        df = pd.read_csv(archivo, encoding="latin1", sep=None, engine="python")
+    else:
+        df = pd.read_excel(archivo)
 
- df.columns=["Date","Payment","IsPaid","Amount","Currency","Account","Category","Subcategory","Goal","Description"]
+    if df.shape[1] == 1:
+        df = df[df.columns[0]].str.split(",", expand=True)
 
- df["Amount"]=pd.to_numeric(df["Amount"],errors="coerce")
- df["Date"]=pd.to_datetime(df["Date"],errors="coerce")
+    df.columns = ["Date","Payment","IsPaid","Amount","Currency","Account","Category","Subcategory","Goal","Description"]
 
- st.subheader("Filtros")
+    df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
- categorias=df["Category"].dropna().unique()
+    st.subheader("Filtros")
 
- categoria_filtro=st.multiselect("Selecciona categoría",categorias,default=categorias)
+    categorias = df["Category"].dropna().unique()
 
- df=df[df["Category"].isin(categoria_filtro)]
+    categoria_filtro = st.multiselect("Selecciona categoría", categorias, default=categorias)
 
- col1,col2,col3=st.columns(3)
+    df = df[df["Category"].isin(categoria_filtro)]
 
- ingresos=df[df["Amount"]>0]["Amount"].sum()
- gastos=df[df["Amount"]<0]["Amount"].sum()
- balance=ingresos+gastos
+    col1, col2, col3 = st.columns(3)
 
- col1.metric("Ingresos",f"${ingresos:,.0f}")
- col2.metric("Gastos",f"${gastos:,.0f}")
- col3.metric("Balance",f"${balance:,.0f}")
+    ingresos = df[df["Amount"] > 0]["Amount"].sum()
+    gastos = df[df["Amount"] < 0]["Amount"].sum()
+    balance = ingresos + gastos
 
- st.subheader("Gastos por categoría")
+    col1.metric("Ingresos", f"${ingresos:,.0f}")
+    col2.metric("Gastos", f"${gastos:,.0f}")
+    col3.metric("Balance", f"${balance:,.0f}")
 
- resumen=df.groupby("Category")["Amount"].sum().reset_index()
+    st.subheader("Gastos por categoría")
 
- fig1=px.bar(resumen,x="Category",y="Amount")
+    resumen = df.groupby("Category")["Amount"].sum().reset_index()
 
- st.plotly_chart(fig1,use_container_width=True)
+    fig1 = px.bar(resumen, x="Category", y="Amount")
 
- st.subheader("Flujo de dinero")
+    st.plotly_chart(fig1, use_container_width=True)
 
- flujo=df.groupby("Date")["Amount"].sum().reset_index()
+    st.subheader("Flujo de dinero")
 
- fig2=px.line(flujo,x="Date",y="Amount")
+    flujo = df.groupby("Date")["Amount"].sum().reset_index()
 
- st.plotly_chart(fig2,use_container_width=True)
+    fig2 = px.line(flujo, x="Date", y="Amount")
 
- st.subheader("Presupuesto por categoría")
+    st.plotly_chart(fig2, use_container_width=True)
 
- presupuesto={}
+    st.subheader("Presupuesto por categoría")
 
- for c in categorias:
-  presupuesto[c]=st.number_input(f"Presupuesto {c}",value=0)
+    presupuesto = {}
 
- tabla_presupuesto=pd.DataFrame(list(presupuesto.items()),columns=["Category","Budget"])
+    for c in categorias:
+        presupuesto[c] = st.number_input(f"Presupuesto {c}", value=0)
 
- comparacion=resumen.merge(tabla_presupuesto,on="Category",how="left")
+    tabla_presupuesto = pd.DataFrame(list(presupuesto.items()), columns=["Category","Budget"])
 
- comparacion["Ejecutado"]=comparacion["Amount"].abs()
+    comparacion = resumen.merge(tabla_presupuesto, on="Category", how="left")
 
- comparacion["Diferencia"]=comparacion["Budget"]-comparacion["Ejecutado"]
+    comparacion["Ejecutado"] = comparacion["Amount"].abs()
 
- st.subheader("Presupuesto vs ejecutado")
+    comparacion["Diferencia"] = comparacion["Budget"] - comparacion["Ejecutado"]
 
- st.dataframe(comparacion)
+    st.subheader("Presupuesto vs ejecutado")
 
- for i in comparacion.index:
+    st.dataframe(comparacion)
 
-  if comparacion.loc[i,"Budget"]>0:
+    for i in comparacion.index:
 
-   uso=comparacion.loc[i,"Ejecutado"]/comparacion.loc[i,"Budget"]
+        if comparacion.loc[i,"Budget"] > 0:
 
-   if uso>1:
-    st.error(f"⚠️ Excediste el presupuesto en {comparacion.loc[i,'Category']}")
+            uso = comparacion.loc[i,"Ejecutado"] / comparacion.loc[i,"Budget"]
 
-   elif uso>0.8:
-    st.warning(f"⚠️ Has usado más del 80% en {comparacion.loc[i,'Category']}")
+            if uso > 1:
+                st.error(f"⚠️ Excediste el presupuesto en {comparacion.loc[i,'Category']}")
 
- st.subheader("Balance")
+            elif uso > 0.8:
+                st.warning(f"⚠️ Has usado más del 80% en {comparacion.loc[i,'Category']}")
 
- balance_df=pd.DataFrame({
- "Tipo":["Ingresos","Gastos","Balance"],
- "Valor":[ingresos,abs(gastos),balance]
- })
+    st.subheader("Balance")
 
- fig3=px.bar(balance_df,x="Tipo",y="Valor")
+    balance_df = pd.DataFrame({
+        "Tipo":["Ingresos","Gastos","Balance"],
+        "Valor":[ingresos,abs(gastos),balance]
+    })
 
- st.plotly_chart(fig3,use_container_width=True)
+    fig3 = px.bar(balance_df, x="Tipo", y="Valor")
+
+    st.plotly_chart(fig3, use_container_width=True)
