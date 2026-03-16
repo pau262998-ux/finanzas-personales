@@ -9,8 +9,8 @@ st.title("Mi dashboard financiero")
 archivo=st.file_uploader("Sube tu archivo de Budge (CSV o Excel)")
 
 if archivo is not None:
-  
-if archivo.name.endswith(".csv"):
+
+ if archivo.name.endswith(".csv"):
   df=pd.read_csv(archivo,encoding="latin1",sep=",")
  else:
   df=pd.read_excel(archivo)
